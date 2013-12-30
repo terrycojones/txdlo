@@ -165,7 +165,7 @@ class TestDeferredListObserver(TestCase):
         # deferred.
         f.addErrback(lambda value: None)
 
-    def testMultipleDeferredsTriggerObserverAndSetCounts(self):
+    def testMultipleDeferredsTriggerObserverAndSetsCounts(self):
         """
         Multiple added deferreds must call the observer correctly and set the
         counts correctly.
