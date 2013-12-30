@@ -68,6 +68,15 @@ def deferredList(deferreds):
     return deferred
 ```
 
+A `DeferredListObserver` maintains three counts:
+
+* `successCount`: the number of observed deferreds that have had fired successfully.
+* `failureCount`: the number of observed deferreds that have errored.
+* `pendingCount`: the number of observed deferreds that have not yet fired.
+
+As in the example above, you can arrange for your observer function to
+examine the `DeferredListObserver` to see its state and act accordingly.
+
 A `DeferredListObserver` can maintain the history of events it has seen (as
 in the example above). This can serve two purposes: (1) it can be useful
 for an observer function to have easy access to the results of the
@@ -100,4 +109,43 @@ The unit tests in `txdlo/test/test_txdlo.py` may also be instructive.
 
 ## Testing
 
-To run the test suite, either use `make test` or `trial txdlo`.
+To run the unit tests, either use `make test` or `trial txdlo`.
+
+## A subtlety
+
+Note that the `DeferredListObserver` adds transparent callback and errback
+functions to the deferreds it is observing. The functions will see the
+state of the firing deferred at that point in its callback chain. If you
+add additional callbacks or errbacks to a deferred after passing it to
+`DeferredListObserver.append`, what goes on in those callbacks and errbacks
+will not be seen. For example, consider this code:
+
+```python
+from twisted.internet.defer import Deferred, succeed, fail
+from txdlo import DeferredListObserver
+
+def die(value):
+    raise Exception()
+
+def observer(index, success, value):
+    if success:
+        print 'The deferred succeeded!'
+
+dlo = DeferredListObserver()
+dlo.observe(observer)
+
+deferred = succeed(42)
+dlo.append(deferred)
+deferred.addCallback(die)
+```
+
+The callback added by the `DeferredListObserver` will see the succesful
+(42) value and report that the deferred fired successfully. But a later
+callback (`die`) on the callback chain for `deferred` will cause the
+deferred to fail.
+
+There's nothing that can be done about this, it's just the way Twisted
+deferreds work. If it's a problem for you, you can likely avoid it by not
+adding callbacks to deferreds after you begin observing them.  You'll see a
+similar warnings on the documentation for
+[Twisted's DeferredList](http://twistedmatrix.com/documents/current/api/twisted.internet.defer.DeferredList.html)

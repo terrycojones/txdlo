@@ -234,3 +234,37 @@ class TestDeferredListObserver(TestCase):
 
         # The third deferred never fired.
         self.assertEqual(1, dlo.pendingCount)
+
+    def testDeferredCallbackValuesArePropagated(self):
+        """
+        A deferred added to a C{DeferredListObserver} must have its callback
+        value propagated correctly.
+        """
+        result = []
+
+        def callback(value):
+            result.append(value)
+
+        dlo = DeferredListObserver()
+        deferred = Deferred().addCallback(callback)
+        dlo.append(deferred)
+        value = object()
+        deferred.callback(value)
+        self.assertIs(value, result[0])
+
+    def testDeferredErrbackValuesArePropagated(self):
+        """
+        A deferred added to a C{DeferredListObserver} must have its errback
+        value propagated correctly.
+        """
+        result = []
+
+        def errback(value):
+            result.append(value)
+
+        dlo = DeferredListObserver()
+        deferred = Deferred().addErrback(errback)
+        dlo.append(deferred)
+        value = object()
+        deferred.errback(value)
+        self.assertIs(value, result[0].value)
