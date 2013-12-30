@@ -38,6 +38,7 @@ Here's a simplified version of
 class, written as a function.
 
 ```python
+from twisted.internet.defer import Deferred
 from txdlo import DeferredListObserver
 
 def deferredList(deferreds):
