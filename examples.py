@@ -82,11 +82,11 @@ def onFirstCallback(deferreds):
     dlo = DeferredListObserver()
     map(dlo.append, deferreds)
     deferred = Deferred()
-    fired = False
+    state = {'fired': False}
 
     def observer(index, success, value):
-        if not fired:
-            fired = True
+        if not state['fired']:
+            state['fired'] = True
             if success:
                 deferred.callback((index, value))
             else:
@@ -160,22 +160,58 @@ def onFirstCallbackOnlyErrbackAsALastResort(deferreds):
     dlo = DeferredListObserver()
     map(dlo.append, deferreds)
     deferred = Deferred()
-    fired = False
+    state = {'fired': False}
 
     def observer(index, success, value):
-        if not fired:
+        if not state['fired']:
             if success:
-                fired = True
+                state['fired'] = True
                 deferred.callback((index, value))
             else:
                 if dlo.pendingCount == 0:
-                    fired = True
+                    state['fired'] = True
                     # No chance of a successful callback. Send the index
                     # and value of the first error.
                     event = dlo.history[0]
                     # We could assert event[1] is False
-                    deferred.errback((event[0], event[2])
+                    deferred.errback((event[0], event[2]))
 
     dlo.observe(observer)
 
     return deferred
+
+
+class DeferredPoolWithEmptyFunction(object):
+    """
+    A class observing a collection of deferreds that provides a
+    C{notifyWhenEmpty} function that returns a deferred that fires when all
+    the deferreds in the collection have fired.
+
+    The use of a class allows us to provide an C{append} function that allows
+    additional deferreds to be added to the observed deferreds.
+
+    Use C{append} to add deferreds.
+    """
+
+    def __init__(self):
+        self._deferreds = []
+        dlo = DeferredListObserver()
+
+        def observer(*ignore):
+            if dlo.pendingCount == 0:
+                # Everything in the list has fired.
+                for deferred in self._deferreds:
+                    deferred.callback(None)
+                self._deferreds = []
+
+        dlo.observe(observer)
+        self.append = dlo.append
+
+    def notifyWhenEmpty(self):
+        """
+        Return a deferred that will be called (with C{None}) when the observed
+        pool of deferreds have all fired.
+        """
+        deferred = Deferred()
+        self._deferreds.append(deferred)
+        return deferred
