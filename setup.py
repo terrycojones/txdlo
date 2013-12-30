@@ -3,7 +3,7 @@
 import os
 
 d = dict(name='txdlo',
-         version='0.0.2',
+         version='0.0.3',
          provides=['txdlo'],
          maintainer='Terry Jones',
          maintainer_email='terry@jon.es',

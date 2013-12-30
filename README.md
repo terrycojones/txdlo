@@ -1,11 +1,103 @@
 ## txdlo
 
-Here's a quick Python class called `DeferredListObserver` that lets you do various things with a list of [Twisted](http://twistedmatrix.com) deferreds. You can add observers that get passed information about the deferreds firing. You can also add deferreds to the observed list at any time (this is very useful if you're dynamically creating deferreds that you want to monitor).
+`txdlo` is a Python package that provides a class called `DeferredListObserver`.
 
-The class can be used to easily build things like Twisted's `DeferredList` or simple variants of it, or can let you separate the various behaviors of `DeferredList` into simpler functions. You can also do other things that I've occasionally wanted.  E.g., get a deferred that fires when N of the observed deferreds have fired. Or ignore errors until one deferred succeeds, only firing with an error if all deferreds fail.
+As you might guess, `DeferredListObserver` lets you observe callback and
+errback events from a list of [Twisted](http://twistedmatrix.com)
+[deferreds](http://twistedmatrix.com/documents/current/core/howto/defer.html). You
+can add observers that will be passed information about deferreds firing.
+You can add deferreds to the observed list at any time, which is very
+useful if you're dynamically creating deferreds that you want to monitor.
 
-Or (a more involved example), suppose you have 3 methods that can return you a user's avatar: a fast local cache, a filesystem, and a slow network call to Gravatar. You want to launch all three lookups at once and use the first answer. But if the cache and/or filesystems fails first, you don't want an error you instead want to take the result from Gravatar and add it to the cache and/or filesystem, as well firing a deferred with the result (wherever it comes from). Only if all three lookups fail do you want to receive an error.
+The class can be used to easily build functions or classes that provide
+deferreds that fire when arbitrary combinations of events from the observed
+deferreds have occurred.
 
-## Notes
+For example you can write functions or classes that support deferreds that
 
-* The code in `examples.py` is not yet tested.
+* Implement Twisted's `DeferredList` or simple variants of it, or that let
+  you separate the various behaviors of `DeferredList` into simpler
+  functions.
+* Provide a deferred that fires when N of the observed deferreds have fired.
+* Provide a deferred that ignores errors until one of the observed deferred
+  succeeds, only firing with an error if all the observed deferreds fail.
+* Or (a more involved example), suppose you have 3 methods that can return
+  you a user's avatar: a fast local cache, a filesystem, and a slow network
+  call to Gravatar. You want to write a deferred-returning function that
+  launches all three lookups at once and fires its deferred with the first
+  answer. But if the cache and/or filesystems fails first, you don't want
+  to trigger an error, you instead want to take the result from Gravatar
+  and add it to the cache and/or filesystem, as well firing the returned
+  deferred with the result (wherever it comes from). Only if all three
+  lookups fail do you want to errback the deferred you returned.
+
+## Usage
+
+Here's a simplified version of
+[Twisted's DeferredList](http://twistedmatrix.com/documents/current/api/twisted.internet.defer.DeferredList.html)
+class, written as a function.
+
+```python
+from txdlo import DeferredListObserver
+
+def deferredList(deferreds):
+    """
+    Return a deferred that fires with a list of (success, result) tuples,
+    'success' being a boolean.
+
+    @param deferreds: a C{list} of deferreds.
+    @return: a L{twisted.internet.defer.Deferred} that fires as above.
+    """
+    if len(deferreds) == 0:
+        return succeed([])
+
+    dlo = DeferredListObserver(maintainHistory=True)
+    map(dlo.append, deferreds)
+    deferred = Deferred()
+
+    def observer(*ignore):
+        if dlo.pendingCount == 0:
+            # Everything in the list has fired.
+            resultList = [None] * len(deferreds)
+            for index, success, value in dlo.history:
+                resultList[index] = (success, value)
+            deferred.callback(resultList)
+
+    dlo.observe(observer)
+
+    return deferred
+```
+
+A `DeferredListObserver` can maintain the history of events it has seen (as
+in the example above). This can serve two purposes: (1) it can be useful
+for an observer function to have easy access to the results of the
+deferreds without having to store the results itself (as above), and (2) if
+you add an observer after some deferreds have already fired you may want
+your observer to be called with the events it missed.
+
+Observer functions must take 3 arguments:
+
+* `index`: the index of the deferred that fired. The index is the
+  zero-based order in which deferreds were added to the
+  `DeferredListObserver` via its `append` function.
+* `success`: `True` if the deferred in question was fired via its
+  `callback`, `False` if it was fired via `errback`.
+* `value`: the value the deferred was fired with.
+
+To cause an added observer to immediately be called with the event history
+(if any), you must instantiate the `DeferredListObserver` with
+`maintainHistory=True` and pass `replayHistory=True` to `observe`. If you
+add an observer and request that the event history is replayed to it but
+the `DeferredListObserver` is not maintaining a history, a `RuntimeError`
+will be raised.
+
+Observers added to a `DeferredListObserver` will be called in the order
+they were added.
+
+The (untested) code in `examples.py` gives some example usages.
+
+The unit tests in `txdlo/test/test_txdlo.py` may also be instructive.
+
+## Testing
+
+To run the test suite, either use `make test` or `trial txdlo`.
