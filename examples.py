@@ -11,7 +11,7 @@ from txdlo import DeferredListObserver
 def deferredList(deferreds):
     """
     Return a deferred that fires with a list of (success, result) tuples,
-        'success' being a boolean.
+    'success' being a boolean.
 
     @param deferreds: a C{list} of deferreds.
     @return: a L{twisted.internet.defer.Deferred} that fires as above.
@@ -39,7 +39,7 @@ def deferredList(deferreds):
 class DeferredList(object):
     """
     A class holding a deferred that fires with a list of (success, result)
-        tuples, 'success' being a boolean.
+    tuples, 'success' being a boolean.
 
     The use of a class allows us to provide an C{append} function that allows
     additional deferreds to be added to the observed list. This is unlike the
@@ -68,12 +68,14 @@ class DeferredList(object):
 
 def onFirstCallback(deferreds):
     """
-    Return a deferred that fires with an (index, result) tuple to indicate
-        which element of C{deferreds} fired first. If any deferred errors,
-        the returned deferred will be failed with an (index, error) value.
+    Return a deferred that fires with an (index, result) tuple to
+    indicate which element of C{deferreds} fired first. If any deferred
+    errors, the returned deferred will be failed with an (index, error)
+    value.
 
     @param deferreds: a C{list} of deferreds.
     @return: a L{twisted.internet.defer.Deferred} that fires as above.
+
     """
     if len(deferreds) == 0:
         raise ValueError('Empty list passed to onFirstCallback')
@@ -85,6 +87,7 @@ def onFirstCallback(deferreds):
 
     def observer(index, success, value):
         if not fired:
+            fired = True
             if success:
                 deferred.callback((index, value))
             else:
@@ -97,13 +100,15 @@ def onFirstCallback(deferreds):
 
 def onNCallbacks(deferreds, n):
     """
-    Return a deferred that fires with a list of C{n} (index, result) tuples
-        once C{n} of the passed deferreds have fired. If any deferred errors,
-        the returned deferred will be failed with an (index, error) value.
+    Return a deferred that fires with a list of C{n} (index, result)
+    tuples once C{n} of the passed deferreds have fired. If any deferred
+    errors, the returned deferred will be failed with an (index, error)
+    value.
 
     @param deferreds: a C{list} of deferreds.
     @param n: an C{int} number of deferreds, as above.
     @return: a L{twisted.internet.defer.Deferred} that fires as above.
+
     """
     if len(deferreds) == 0:
         raise ValueError('Empty list passed to onFirstCallback')
@@ -133,6 +138,46 @@ def onNCallbacks(deferreds, n):
                             return
         else:
             deferred.errback((index, value))
+
+    dlo.observe(observer)
+
+    return deferred
+
+
+def onFirstCallbackOnlyErrbackAsALastResort(deferreds):
+    """
+    Return a deferred that fires with an (index, result) tuple to
+    indicate which element of C{deferreds} fired first. If any deferred
+    errors, we ignore it if there's still a chance that one of the
+    deferreds will fire successfully. Only if all deferreds fail do we
+    errback with the (index, error) value of the first error.
+
+    @param deferreds: a C{list} of deferreds.
+    @return: a L{twisted.internet.defer.Deferred} that fires as above.
+
+    """
+    if len(deferreds) == 0:
+        raise ValueError('Empty list passed to '
+                         'onFirstCallbackOnlyErrbackAsALastResort')
+
+    dlo = DeferredListObserver()
+    map(dlo.append, deferreds)
+    deferred = Deferred()
+    fired = False
+
+    def observer(index, success, value):
+        if not fired:
+            if success:
+                fired = True
+                deferred.callback((index, value))
+            else:
+                if dlo.pendingCount == 0:
+                    fired = True
+                    # No chance of a successful callback. Send the index
+                    # and value of the first error.
+                    event = dlo.history[0]
+                    # We could assert event[1] is False
+                    deferred.errback((event[0], event[2])
 
     dlo.observe(observer)
 
