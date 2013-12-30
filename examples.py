@@ -58,3 +58,47 @@ def onFirstCallback(deferreds):
     dlo.observe(observer)
 
     return deferred
+
+
+def onNCallbacks(deferreds, n):
+    """
+    Return a deferred that fires with a list of C{n} (index, result) tuples
+        once C{n} of the passed deferreds have fired. If any deferred errors,
+        the returned deferred will be failed with an (index, error) value.
+
+    @param deferreds: a C{list} of deferreds.
+    @param n: an C{int} number of deferreds, as above.
+    @return: a L{twisted.internet.defer.Deferred} that fires as above.
+    """
+    if len(deferreds) == 0:
+        raise ValueError('Empty list passed to onFirstCallback')
+
+    if n < 0:
+        raise ValueError('n < 0 passed to onFirstCallback')
+
+    if n > len(deferreds):
+        raise ValueError('n > len(deferreds) passed to onFirstCallback')
+
+    if n == 0:
+        return succeed([])
+
+    dlo = DeferredListObserver()
+    map(dlo.append, deferreds)
+    deferred = Deferred()
+
+    def observer(index, success, value):
+        if success:
+            if dlo.successCount == n:
+                resultList = []
+                for _index, _success, _value in dlo.history:
+                    if _success:
+                        resultList.append = (_index, _value)
+                        if len(resultList) == n:
+                            deferred.callback(resultList)
+                            return
+        else:
+            deferred.errback((index, value))
+
+    dlo.observe(observer)
+
+    return deferred

@@ -35,6 +35,15 @@ class TestDeferredListObserver(TestCase):
         dlo.append(succeed(None))
         self.assertEqual(1, dlo.successCount)
 
+    def testAddingACalledDeferredSetsHistory(self):
+        """
+        A deferred list with a called deferred added to it must have a correct
+        length one history.
+        """
+        dlo = DeferredListObserver()
+        dlo.append(succeed(None))
+        self.assertEqual([(0, True, None)], dlo.history)
+
     def testAddingAFailedDeferredResultsInFailureLengthOne(self):
         """
         A deferred set with a failed deferred added to it must have falure
@@ -94,6 +103,44 @@ class TestDeferredListObserver(TestCase):
         dlo.observe(observer)
         dlo.append(succeed(42))
         self.assertEqual((0, True, 42), _result)
+
+    def testHistoryReplay(self):
+        """
+        When an added deferred is called before any observer is present and
+        then an observer is added, the observer must be called with the details
+        of the event that occurred before it was added.
+        """
+        global _result
+
+        def observer(index, success, value):
+            global _result
+            _result = (index, success, value)
+
+        dlo = DeferredListObserver()
+        dlo.append(succeed(42))
+
+        _result = None
+        dlo.observe(observer)
+        self.assertEqual((0, True, 42), _result)
+
+    def testHistoryNotReplayed(self):
+        """
+        When an added deferred is called before any observer is present and
+        then an observer is added but history replay is not wanted, the
+        observer must not be called with the details of the event that
+        occurred before it was added.
+        """
+        global _result
+
+        def observer(index, success, value):
+            raise RuntimeError('oops')
+
+        dlo = DeferredListObserver()
+        dlo.append(succeed(42))
+
+        _result = None
+        dlo.observe(observer, replayHistory=False)
+        self.assertEqual(None, _result)
 
     def testErroringAddedDeferredTriggersObserver(self):
         """

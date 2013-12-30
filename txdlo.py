@@ -15,9 +15,9 @@ class DeferredListObserver(object):
     """
 
     def __init__(self):
-        self._observers = []
         self.history = []
         self.successCount = self.failureCount = self.pendingCount = 0
+        self._observers = []
 
     def _makeCallbacks(self, index):
 
@@ -53,7 +53,7 @@ class DeferredListObserver(object):
         self.pendingCount += 1
         return deferred.addCallbacks(callback, errback)
 
-    def addObserver(self, observer, replayHistory=True):
+    def observe(self, observer, replayHistory=True):
         """
         @param observer: a C{function} that will be called with 3 arguments
             each time one of the observed deferreds in the set fires. The
