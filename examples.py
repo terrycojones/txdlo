@@ -1,3 +1,8 @@
+"""
+NOTE: these functions are untested. They're just here to provide an example of
+      how you might use DeferredListObserver to do various things.
+"""
+
 from twisted.internet.defer import Deferred, succeed
 
 from txdlo import DeferredListObserver
@@ -29,6 +34,36 @@ def deferredList(deferreds):
     dlo.observe(observer)
 
     return deferred
+
+
+class DeferredList(object):
+    """
+    A class holding a deferred that fires with a list of (success, result)
+        tuples, 'success' being a boolean.
+
+    The use of a class allows us to provide an C{append} function that allows
+    additional deferreds to be added to the observed list. This is unlike the
+    above L{deferredList} function and the Twisted DeferredList class, both of
+    which take a fixed list of deferreds.
+
+    Use C{append} to add deferreds. Add callbacks to C{deferred} to be notified
+    when all deferreds have fired.  Deferreds can be added at any time.
+    """
+
+    def __init__(self):
+        self.deferred = Deferred()
+        dlo = DeferredListObserver()
+
+        def observer(*ignore):
+            if dlo.pendingCount == 0:
+                # Everything in the list has fired.
+                resultList = [None] * (dlo.successCount + dlo.failureCount)
+                for index, success, value in dlo.history:
+                    resultList[index] = (success, value)
+                self.deferred.callback(resultList)
+
+        dlo.observe(observer)
+        self.append = dlo.append
 
 
 def onFirstCallback(deferreds):
