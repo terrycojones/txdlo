@@ -71,7 +71,7 @@ def deferredList(deferreds):
 
 A `DeferredListObserver` maintains three counts:
 
-* `successCount`: the number of observed deferreds that have had fired successfully.
+* `successCount`: the number of observed deferreds that have fired successfully.
 * `failureCount`: the number of observed deferreds that have errored.
 * `pendingCount`: the number of observed deferreds that have not yet fired.
 
