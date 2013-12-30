@@ -75,7 +75,6 @@ def onFirstCallback(deferreds):
 
     @param deferreds: a C{list} of deferreds.
     @return: a L{twisted.internet.defer.Deferred} that fires as above.
-
     """
     if len(deferreds) == 0:
         raise ValueError('Empty list passed to onFirstCallback')
@@ -108,7 +107,6 @@ def onNCallbacks(deferreds, n):
     @param deferreds: a C{list} of deferreds.
     @param n: an C{int} number of deferreds, as above.
     @return: a L{twisted.internet.defer.Deferred} that fires as above.
-
     """
     if len(deferreds) == 0:
         raise ValueError('Empty list passed to onFirstCallback')
@@ -154,7 +152,6 @@ def onFirstCallbackOnlyErrbackAsALastResort(deferreds):
 
     @param deferreds: a C{list} of deferreds.
     @return: a L{twisted.internet.defer.Deferred} that fires as above.
-
     """
     if len(deferreds) == 0:
         raise ValueError('Empty list passed to '
