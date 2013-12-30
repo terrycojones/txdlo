@@ -9,7 +9,8 @@ class DeferredListObserver(object):
         class instances. If C{False}, the default, no history is kept.
     @ivar history: a C{list} of (index, success, value) tuples, in the order
         that the deferreds in the set fired (this will generally not be the
-        order in which the deferreds are added to the set).
+        order in which the deferreds are added to the set). The history
+        attribute will only exist if C{maintainHistory} (above) is C{True}.
     @ivar successCount: the number of observed deferreds that have been called
         successfully.
     @ivar failureCount: the number of observed deferreds that have been
