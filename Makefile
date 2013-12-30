@@ -15,3 +15,6 @@ pyflakes:
 clean:
 	find . -name '*.pyc' -o -name '*~' -print0 | $(XARGS) -0 rm
 	rm -fr _trial_temp
+
+upload:
+	python setup.py sdist upload
