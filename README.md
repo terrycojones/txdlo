@@ -135,17 +135,23 @@ dlo = DeferredListObserver()
 dlo.observe(observer)
 
 deferred = succeed(42)
-dlo.append(deferred)
+dlo.append(deferred)  # dlo adds a transparent callback & errback to deferred.
+
 deferred.addCallback(die)
 ```
 
-The callback added by the `DeferredListObserver` will see the succesful
-(42) value and report that the deferred fired successfully. But a later
-callback (`die`) on the callback chain for `deferred` will cause the
-deferred to fail.
+The callback added by the `DeferredListObserver` (in the `.append` call)
+will receive the succesful (42) value and report that the deferred fired
+successfully. But the later callback (`die`) for `deferred` will cause the
+deferred to transition into a failed state.
 
-There's nothing that can be done about this, it's just the way Twisted
-deferreds work. If it's a problem for you, you can likely avoid it by not
-adding callbacks to deferreds after you begin observing them.  You'll see a
-similar warnings on the documentation for
+There's nothing that can be done about this (depending on your needs, it
+can be an advantage).  That's just the way Twisted deferreds work. If it's
+a problem for you, you can avoid it by not adding callbacks to deferreds
+after you begin observing them.
+
+You'll see a similar warnings on the documentation for
 [Twisted's DeferredList](http://twistedmatrix.com/documents/current/api/twisted.internet.defer.DeferredList.html)
+
+If you don't understand this warning, you should probably spend more
+quality time alone with Twisted deferreds!
