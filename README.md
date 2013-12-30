@@ -1,4 +1,4 @@
-## txdlo
+## txdlo - a (Twisted) deferred list observer
 
 `txdlo` is a Python package that provides a class called `DeferredListObserver`.
 
