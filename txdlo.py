@@ -1,7 +1,7 @@
 class DeferredListObserver(object):
     """
-    Calls an observer function with information about firing events that occur
-    on a set of deferreds.
+    Call a list of observer functions with information about firing events
+    that occur on a set of deferreds.
 
     @ivar history: a C{list} of (index, success, value) tuples, in the order
         that the deferreds in the set fired (this will generally not be the

@@ -1,4 +1,4 @@
-from twisted.internet.defer import succeed
+from twisted.internet.defer import Deferred, succeed
 
 from txdlo import DeferredListObserver
 
