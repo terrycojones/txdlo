@@ -9,4 +9,3 @@ Or (a more involved example), suppose you have 3 methods that can return you a u
 ## Notes
 
 * The code in `examples.py` is not yet tested.
-* Saving the event history (in `txdlo.py`) could be made optional, seeing as most use cases are likely to be simple, with a single observer added immediately.
