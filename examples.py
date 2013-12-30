@@ -19,7 +19,7 @@ def deferredList(deferreds):
     if len(deferreds) == 0:
         return succeed([])
 
-    dlo = DeferredListObserver()
+    dlo = DeferredListObserver(maintainHistory=True)
     map(dlo.append, deferreds)
     deferred = Deferred()
 
@@ -52,7 +52,7 @@ class DeferredList(object):
 
     def __init__(self):
         self.deferred = Deferred()
-        dlo = DeferredListObserver()
+        dlo = DeferredListObserver(maintainHistory=True)
 
         def observer(*ignore):
             if dlo.pendingCount == 0:
@@ -120,7 +120,7 @@ def onNCallbacks(deferreds, n):
     if n == 0:
         return succeed([])
 
-    dlo = DeferredListObserver()
+    dlo = DeferredListObserver(maintainHistory=True)
     map(dlo.append, deferreds)
     deferred = Deferred()
 
@@ -157,7 +157,7 @@ def onFirstCallbackOnlyErrbackAsALastResort(deferreds):
         raise ValueError('Empty list passed to '
                          'onFirstCallbackOnlyErrbackAsALastResort')
 
-    dlo = DeferredListObserver()
+    dlo = DeferredListObserver(maintainHistory=True)
     map(dlo.append, deferreds)
     deferred = Deferred()
     state = {'fired': False}
